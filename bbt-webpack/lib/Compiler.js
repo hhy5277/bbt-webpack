@@ -84,6 +84,10 @@ class Compiler {
         // 把相对路径和模块中的内容对应起来 
         this.modules[moduleName] = sourceCode
 
+        // 递归解析依赖关系
+        dependencies.forEach((dep) => {
+            this.buildModule(path.join(this.root, dep), false)
+        })
     }
 
     emitFile() { }
@@ -92,7 +96,7 @@ class Compiler {
         // this.entry = ./src/index.js 
         // 创建模块的依赖关系
         this.buildModule(path.resolve(this.root, this.entry), true) // 工作路径+相对路径 = 绝对路径
-        console.log('this.entry', this.entry);
+        console.log('解析之后：', this.modules, this.entryId);
 
 
         // 发布编译结果
