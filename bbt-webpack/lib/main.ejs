@@ -17,30 +17,16 @@
     }
   
     // 以./src/index.js为入口,层层递归所引的依赖模块
-    return __webpack_require__(__webpack_require__.s = "./src/index.js");
+    return __webpack_require__(__webpack_require__.s = "<%- entryId %>");
   })
     /************************************************************************/
     // 以key-value的形式引入的模块代码
     ({
-        
-            "./src/index.js":
+        <% for(let key in modules){ %>
+            "<%- key %>":
             (function (module, exports, __webpack_require__) {
-              eval(`let str = __webpack_require__("./src/a.js");
-
-console.log(str);`);
+              eval(`<%- modules[key] %>`);
             }),
-        
-            "./src/a.js":
-            (function (module, exports, __webpack_require__) {
-              eval(`let b = __webpack_require__("./src/base/b.js");
-
-module.exports = 'a' + b;`);
-            }),
-        
-            "./src/base/b.js":
-            (function (module, exports, __webpack_require__) {
-              eval(`module.exports = 'b';`);
-            }),
-        
+        <% } %>
      
     });

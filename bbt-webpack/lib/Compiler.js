@@ -4,6 +4,7 @@ let babylon = require('babylon')
 let t = require('@babel/types')
 let traverse = require('@babel/traverse').default
 let generator = require('@babel/generator').default
+let ejs = require('ejs')
 
 class Compiler {
     constructor(config) {
@@ -90,7 +91,19 @@ class Compiler {
         })
     }
 
-    emitFile() { }
+    emitFile() {
+
+        // ejs模板字符串
+        let templateStr = this.getSource(path.join(__dirname,'main.ejs'))
+
+        let code = ejs.render(templateStr, { entryId: this.entryId, modules: this.modules })
+        this.assets = {}
+        // 输出代码与输出路径一一对应
+        let main = path.join(this.config.output.path, this.config.output.filename)
+        this.assets[main] = code
+        fs.writeFileSync(main, this.assets[main])
+
+    }
     run() {
         // this.root = /Users/babytree/bbtworkspace/bbt-webpack/demo
         // this.entry = ./src/index.js 
