@@ -25,6 +25,24 @@ class Compiler {
     */
     getSource(modulePath) {
         let content = fs.readFileSync(modulePath, 'utf8')
+        let rules = this.config.module.rules;
+        // 遍历所有规则
+        rules.forEach((rule, i) => {
+            let { test, use } = rule
+            let len = use.length - 1;
+            if (test.test(modulePath)) { // 比如正则匹配上了.less文件
+                function loaderComiler(params) {
+                    let loader = require(use[len--])
+                    content = loader(content)
+                    if (len >= 0) {
+                        loaderComiler()
+                    }
+                }
+                loaderComiler()
+            }
+        })
+
+
         return content
     }
     /**
@@ -40,8 +58,8 @@ class Compiler {
      * @babel/generator AST转成源码
      */
     parse(source, parentPath) {
-        console.log('------parse----');
-        console.log(source, parentPath);
+        // console.log('------parse----');
+        // console.log(source, parentPath);
         let ast = babylon.parse(source)
         let dependencies = []
         traverse(ast, {
@@ -73,8 +91,8 @@ class Compiler {
         // modulePath = /Users/babytree/bbtworkspace/bbt-webpack/demo/src/index.js
         let moduleName = './' + path.relative(this.root, modulePath)
 
-        console.log('moduleName', moduleName);
-        console.log(source);
+        // console.log('moduleName', moduleName);
+        // console.log(source);
 
         if (isEntry) this.entryId = moduleName // 主入口
 
@@ -94,7 +112,7 @@ class Compiler {
     emitFile() {
 
         // ejs模板字符串
-        let templateStr = this.getSource(path.join(__dirname,'main.ejs'))
+        let templateStr = this.getSource(path.join(__dirname, 'main.ejs'))
 
         let code = ejs.render(templateStr, { entryId: this.entryId, modules: this.modules })
         this.assets = {}
@@ -109,7 +127,7 @@ class Compiler {
         // this.entry = ./src/index.js 
         // 创建模块的依赖关系
         this.buildModule(path.resolve(this.root, this.entry), true) // 工作路径+相对路径 = 绝对路径
-        console.log('解析之后：', this.modules, this.entryId);
+        // console.log('解析之后：', this.modules, this.entryId);
 
 
         // 发布编译结果
