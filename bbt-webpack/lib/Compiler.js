@@ -5,6 +5,7 @@ let t = require('@babel/types')
 let traverse = require('@babel/traverse').default
 let generator = require('@babel/generator').default
 let ejs = require('ejs')
+let { SyncHook } = require('tapable')
 
 class Compiler {
     constructor(config) {
@@ -16,8 +17,24 @@ class Compiler {
         this.modules = {};
 
         this.entry = config.entry; // 入口路径 ‘./src/index.js’
-        // 工作路径： 运行npx bbt-webpack 的路径 
+        // 工作路径： 运行npx bbt-webpack 的路径  
         this.root = process.cwd()
+        // webpack生命周期钩子
+        this.hooks = {
+            entryOption: new SyncHook(),
+            compile: new SyncHook(),
+            afterCompile: new SyncHook(),
+            afterPlugins: new SyncHook(),
+            run: new SyncHook(),
+            emit: new SyncHook(),
+            done: new SyncHook(),
+        }
+        let plugins = this.config.plugins;
+        Array.isArray(plugins) && plugins.forEach((plugin)=>{
+            plugin.apply(this)  // apply不是改变this指向, 而是调插件的apply方法
+        })
+        this.hooks.afterPlugins.call() // 编译发布完成的钩子
+
     }
     /**
     * 读取文件内容
@@ -123,15 +140,24 @@ class Compiler {
 
     }
     run() {
+
+        this.hooks.run.call() // 运行的钩子
+        this.hooks.compile.call() // 编译前的钩子
+
         // this.root = /Users/babytree/bbtworkspace/bbt-webpack/demo
         // this.entry = ./src/index.js 
         // 创建模块的依赖关系
         this.buildModule(path.resolve(this.root, this.entry), true) // 工作路径+相对路径 = 绝对路径
         // console.log('解析之后：', this.modules, this.entryId);
 
+        this.hooks.afterCompile.call() // 编译后的钩子
 
         // 发布编译结果
         this.emitFile()
+
+        this.hooks.emit.call() // 发布文件的钩子
+        this.hooks.done.call() // 编译发布完成的钩子
+
     }
 }
 module.exports = Compiler

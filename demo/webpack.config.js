@@ -1,4 +1,20 @@
 let path = require('path')
+class P {
+    apply(compiler) {
+        // 生命周期钩子订阅
+        compiler.hooks.emit.tap('emit', function () {
+            console.log('emit')
+        })
+    }
+}
+class P1 {
+    apply(compiler) {
+        // 生命周期钩子订阅
+        compiler.hooks.afterPlugins.tap('emit', function () {
+            console.log('afterPlugins')
+        })
+    }
+}
 
 module.exports = {
     mode: 'development',
@@ -11,9 +27,13 @@ module.exports = {
         rules: [{
             test: /\.less$/,
             use: [
-                path.resolve(__dirname,'loader','style-loader'),
-                path.resolve(__dirname,'loader','less-loader')
+                path.resolve(__dirname, 'loader', 'style-loader'),
+                path.resolve(__dirname, 'loader', 'less-loader')
             ]
         }]
-    }
+    },
+    plugins:[
+        new P(),
+        new P1()
+    ]
 }
